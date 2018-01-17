@@ -20,4 +20,6 @@ from django.conf.urls import url, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^', include('snippets.urls')),
+    # 4. Authentication and Permission (Adding login to the Browsable API)
+    url(r'api-auth/', include('rest_framework.urls')),
 ]
