@@ -1,5 +1,5 @@
 ################################################################################################################
-# 5. Relationships & Hyperlinked APIs
+# 6. Viewset and routers
 ################################################################################################################
 from django.contrib.auth.models import User
 from snippets.models import Snippet
@@ -7,26 +7,61 @@ from snippets.serializers import SnippetSerializer, UserSerializer
 from rest_framework import generics
 from rest_framework import permissions
 from snippets.permissions import IsOwnerOrReadOnly # Object level permissions
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, detail_route
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework import renderers
+from rest_framework import viewsets
 
-# Creating an endpoint for the root of our API
-@api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'users': reverse('user-list', request=request, format=format),
-        'snippets': reverse('snippet-list', request=request, format=format)
-    })
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
 
-class SnippetHighlight(generics.GenericAPIView):
+class SnippetViewSet(viewsets.ModelViewSet):
     queryset = Snippet.objects.all()
-    renderer_classes = (renderers.StaticHTMLRenderer,)
+    serializer_class = SnippetSerializer
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,)
 
-    def get(self,request, *args, **kwargs):
+    @detail_route(renderer_classes=[renderers.StaticHTMLRenderer])
+    def highlight(self, request, *args, **kwargs):
         snippet = self.get_object()
         return Response(snippet.highlighted)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+################################################################################################################
+# 5. Relationships & Hyperlinked APIs
+################################################################################################################
+# move to up
+# from django.contrib.auth.models import User
+# from snippets.models import Snippet
+# from snippets.serializers import SnippetSerializer, UserSerializer
+# from rest_framework import generics
+# from rest_framework import permissions
+# from snippets.permissions import IsOwnerOrReadOnly # Object level permissions
+# from rest_framework.decorators import api_view
+# from rest_framework.response import Response
+# from rest_framework.reverse import reverse
+# from rest_framework import renderers
+
+# Creating an endpoint for the root of our API
+# 6. Veiwsets & Routers ( No need when use router)
+# @api_view(['GET'])
+# def api_root(request, format=None):
+#     return Response({
+#         'users': reverse('user-list', request=request, format=format),
+#         'snippets': reverse('snippet-list', request=request, format=format)
+#     })
+
+# move to Viewsets
+# class SnippetHighlight(generics.GenericAPIView):
+#     queryset = Snippet.objects.all()
+#     renderer_classes = (renderers.StaticHTMLRenderer,)
+#
+#     def get(self,request, *args, **kwargs):
+#         snippet = self.get_object()
+#         return Response(snippet.highlighted)
 ################################################################################################################
 
 ################################################################################################################
@@ -39,15 +74,14 @@ class SnippetHighlight(generics.GenericAPIView):
 # from rest_framework import generics
 # from rest_framework import permissions
 # from snippets.permissions import IsOwnerOrReadOnly # Object level permissions
-
-class UserList(generics.ListAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-class UserDetail(generics.RetrieveAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
+#
+# class UserList(generics.ListAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+#
+# class UserDetail(generics.RetrieveAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
 
 ################################################################################################################
 ################################################################################################################
@@ -60,25 +94,25 @@ class UserDetail(generics.RetrieveAPIView):
 # from snippets.models import Snippet
 # from snippets.serializers import SnippetSerializer
 # from rest_framework import generics
-
-class SnippetList(generics.ListCreateAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-
-    # 4. Authentication and Permission(Adding required permissions to views)
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-
-    # 4. Authentication and Permission(Associating Snippets with Users)
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Snippet.objects.all()
-    serializer_class = SnippetSerializer
-
-    # 4. Authentication and Permission
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,) # Object level permissions
-    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,) # Adding required permissions to views
+#
+# class SnippetList(generics.ListCreateAPIView):
+#     queryset = Snippet.objects.all()
+#     serializer_class = SnippetSerializer
+#
+#     # 4. Authentication and Permission(Adding required permissions to views)
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+#
+#     # 4. Authentication and Permission(Associating Snippets with Users)
+#     def perform_create(self, serializer):
+#         serializer.save(owner=self.request.user)
+#
+# class SnippetDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Snippet.objects.all()
+#     serializer_class = SnippetSerializer
+#
+#     # 4. Authentication and Permission
+#     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly,) # Object level permissions
+#     # permission_classes = (permissions.IsAuthenticatedOrReadOnly,) # Adding required permissions to views
 #--------------------------------------------------------------------------------------------------------------#
 
 #--------------------------------------------------------------------------------------------------------------#
